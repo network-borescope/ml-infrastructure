@@ -1,0 +1,6 @@
+# viaipe query
+{"select": "avg_in", "where": [ ["time", "between", 1651086339, 1659380342], ["pop","eq", 9 ], ["cliente","eq", 5], ["interface", "eq", 2] ], "group-by": "time" }
+# throughput (BANDA-BBR)
+{"select": "h_avg", "where": [ ["time", "between", 1651086339, 1659380342], ["src","eq", 19 ], ["dst","eq", 26 ], ["metric", "eq", 77] ], "group-by": "time" }
+# histogram-rtt (avg)
+{"select": "h_avg", "where": [ ["time", "between", 1651086339, 1659380342], ["src","eq", 19 ], ["dst","eq", 26 ], ["metric", "eq", 11] ], "group-by": "time" }
