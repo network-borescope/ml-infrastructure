@@ -53,13 +53,16 @@ def create_database(DATABASE, conn = None):
     # FILENAME_HASH: MD5(MODEL_NAME+PRIMARY_KEY+BEGIN+END)
 
     models_table = """ CREATE TABLE IF NOT EXISTS model (
-                                normalized_query VARCHAR(128),
-                                training_start INT,
-                                training_end INT,
+                                query_juice VARCHAR(128),
+                                tc_schema varchar(30),
+                                dimension VARCHAR(20),
+                                inferior_limit INT,
+                                superior_limit INT,
                                 model_name varchar(32),
                                 filename_md5 char(32),
+                                filename_raw TEXT,
 
-                                CONSTRAINT PK_model PRIMARY KEY (normalized_query)
+                                CONSTRAINT PK_model PRIMARY KEY (query_juice)
                             ); """
 
 
@@ -84,14 +87,14 @@ def create_database(DATABASE, conn = None):
 #                         AUX FUNCTIONS                           #
 #                                                                 #
 ###################################################################
-# normalize TC query
-def normalize_query(query):
+# extract TC query juice
+def decode_query(query):
     return
 
 
 # md5 filename
-def generate_filename(normalized_query, model_name, training_begin, training_end):
-    s = f"{normalize_query};{model_name};{training_begin};{training_end}"
+def generate_filename(query_juice, model_name, inferior_limit, superior_limit):
+    s = f"{query_juice};{model_name};{inferior_limit};{superior_limit}"
     return md5(s.encode("utf-8")).hexdigest()
 
 
@@ -101,20 +104,20 @@ def generate_filename(normalized_query, model_name, training_begin, training_end
 #                         INSERT FUNCTIONS                        #
 #                                                                 #
 ###################################################################
-def insert_model(conn, query, training_start, training_end, model_name):
-    sql = ''' INSERT INTO model(normalized_query, training_start,
-                training_end, model_name, filename_md5)
+def insert_model(conn, query, inferior_limit, superior_limit, model_name):
+    sql = ''' INSERT INTO model(query_juice, inferior_limit,
+                superior_limit, model_name, filename_md5)
               VALUES(?, ?, ?, ?, ?) '''
     
     cur = conn.cursor()
 
-    normalized_query = normalize_query(query)
-    filename_md5 = generate_filename(normalized_query, model_name,
-                    training_begin, training_end)
+    query_juice = decode_query(query)
+    filename_md5 = generate_filename(query_juice, model_name,
+                    inferior_limit, superior_limit)
     
     try:
-        cur.execute(sql, (normalized_query, training_start,
-                training_end, model_name, filename_md5))
+        cur.execute(sql, (query_juice, inferior_limit,
+                superior_limit, model_name, filename_md5))
         conn.commit()
     except sqlite3.IntegrityError as e:
         print("!!! ERROR: Query already exists in DATABASE!")
@@ -128,10 +131,10 @@ def insert_model(conn, query, training_start, training_end, model_name):
 #                         QUERY FUNCTIONS                         #
 #                                                                 #
 ###################################################################
-def get_model_file(conn, normalized_query):
-    sql = ''' SELECT filename_md5 FROM model WHERE normalized_query = ? '''
+def get_model_file(conn, query_juice):
+    sql = ''' SELECT filename_md5 FROM model WHERE query_juice = ? '''
     cur = conn.cursor()
-    cur.execute(sql, (normalized_query, ))
+    cur.execute(sql, (query_juice, ))
 
     res = curr.fetchone()[0]
     
